@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { TezosToolkit } from "@taquito/taquito";
 import "./App.css";
 import ConnectButton from "./components/ConnectWallet";
@@ -6,6 +6,7 @@ import DisconnectButton from "./components/DisconnectWallet";
 import qrcode from "qrcode-generator";
 import UpdateContract from "./components/UpdateContract";
 import Transfers from "./components/Transfers";
+import useFxHash from "./hooks/useFxHash";
 
 enum BeaconConnection {
   NONE = "",
@@ -28,6 +29,14 @@ const App = () => {
   const [copiedPublicToken, setCopiedPublicToken] = useState<boolean>(false);
   const [beaconConnection, setBeaconConnection] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<string>("transfer");
+  const { data: fxHashData } = useFxHash(userAddress);
+  const [userFishes, setUserFishes] = useState<any>([])
+
+  useEffect(() => {
+    let _userFishes = fxHashData?.data?.user?.objkts.filter((obj: { issuer: { name: string; }; }) => obj?.issuer?.name === "SoulFish")
+    setUserFishes(_userFishes)
+    console.log(_userFishes)
+  }, [fxHashData])
 
   // Ghostnet Increment/Decrement contract
   const contractAddress: string = "KT1QMGSLynvwwSfGbaiJ8gzWHibTCweCGcu8";
@@ -111,6 +120,33 @@ const App = () => {
         </div>
         <div id="dialog">
           <div id="content">
+
+            <h2>Fish</h2>
+            <div className="fishes">
+              {userFishes?.map((fish: any, fishIndex: number) => {
+                return (
+                  <div className="fish" key={fish?.id} >
+                    <img style={{ width: "100%" }}
+                      alt={fish?.name}
+                      src={`https://cloudflare-ipfs.com/ipfs/${fish?.metadata?.displayUri.replace("ipfs://", "")}`} />
+                    {fishIndex === 0 && <iframe src={`https://gateway.fxhash2.xyz/ipfs/QmWYvkFHPLBkmv1CSCK5vpm3MSBggbALDqRZQXitzPPLJn/?fxhash=${fish?.metadata?.iterationHash}`}
+                      title="interactive"
+                    ></iframe>}
+
+                    <div className="fish-info">
+                      <div className="fish-info__title">
+                        {fish?.name}
+                      </div>
+                      <div className="fish-info__description">
+                        {fish?.description}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
+
             {activeTab === "transfer" ? (
               <div id="transfers">
                 <h3 className="text-align-center">Make a transfer</h3>
